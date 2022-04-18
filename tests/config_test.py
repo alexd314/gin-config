@@ -2559,5 +2559,19 @@ class ConfigTest(absltest.TestCase):
           'param2'
         ])
 
+        config_str5 = """
+        import gin.testdata.import_test_configurables
+        identity.param = 'param2'
+        include '{}/gin/testdata/append.gin'
+        ConfigurableClass.kwarg1 += [@identity()]
+        """.format(absltest.get_default_test_srcdir())
+        config.clear_config(clear_constants=True)
+        config.parse_config(config_str5)
+        self.assertListEqual(ConfigurableClass().kwarg1, [
+          'param1',
+          'param2'
+        ])
+
+
 if __name__ == '__main__':
   absltest.main()
