@@ -400,7 +400,6 @@ REQUIRED = object()
 # Add it to constants.
 _CONSTANTS['gin.REQUIRED'] = REQUIRED
 
-
 def _find_class_construction_fn(cls):
   """Find the first __init__ or __new__ method in the given class's MRO."""
   for base in inspect.getmro(cls):  # pytype: disable=wrong-arg-types
@@ -1013,7 +1012,7 @@ def clear_config(clear_constants=False):
     _OPERATIVE_CONFIG.clear()
 
 
-def bind_parameter(binding_key, value):
+def bind_parameter(binding_key, value, append = False):
   """Binds the parameter value specified by `binding_key` to `value`.
 
   The `binding_key` argument should either be a string of the form
@@ -1050,7 +1049,24 @@ def bind_parameter(binding_key, value):
 
   pbk = ParsedBindingKey.parse(binding_key)
   fn_dict = _CONFIG.setdefault(pbk.config_key, {})
-  fn_dict[pbk.arg_name] = value
+  if not append:
+    fn_dict[pbk.arg_name] = value
+  else:
+    # Dict of supported appendable primitives in the form: type : append function
+    appendables = {
+      list : 'extend',
+      dict : 'update'
+    }
+    if not type(value) in appendables:
+      raise ValueError('Invalid appendable type. Supported types include list, dict and set')
+    if pbk.arg_name in fn_dict:
+      prev_value = fn_dict[pbk.arg_name]
+      if type(prev_value) != type(value):
+        raise ValueError(f"Cannot append to {pbk.config_key+'.'+pbk.arg_name} which has type {type(prev_value)}, an object of type: {type(value)}")
+      append_func = getattr(prev_value, appendables[type(prev_value)])
+      append_func(value)
+    else:
+      fn_dict[pbk.arg_name] = value
 
 
 def query_parameter(binding_key):
@@ -2321,14 +2337,14 @@ def parse_config(bindings, skip_unknown=False):
   with _parse_scope() as parse_context:
     for statement in parser:
       if isinstance(statement, config_parser.BindingStatement):
-        scope, selector, arg_name, value, location = statement
+        scope, selector, arg_name, value, location, append = statement
         if not arg_name:
           macro_name = '{}/{}'.format(scope, selector) if scope else selector
           with utils.try_with_location(location):
-            bind_parameter((macro_name, 'gin.macro', 'value'), value)
+            bind_parameter((macro_name, 'gin.macro', 'value'), value, append)
         elif not _should_skip(selector, skip_unknown):
           with utils.try_with_location(location):
-            bind_parameter((scope, selector, arg_name), value)
+            bind_parameter((scope, selector, arg_name), value, append)
       elif isinstance(statement, config_parser.BlockDeclaration):
         if not _should_skip(statement.selector, skip_unknown):
           with utils.try_with_location(statement.location):

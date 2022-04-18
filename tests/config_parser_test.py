@@ -128,7 +128,7 @@ class ConfigParserTest(absltest.TestCase):
 
     for statement in parser:
       if isinstance(statement, config_parser.BindingStatement):
-        scope, selector, arg_name, value, _ = statement
+        scope, selector, arg_name, value, _, _ = statement
         config.setdefault((scope, selector), {})[arg_name] = value
       elif isinstance(statement, config_parser.BlockDeclaration):
         blocks.append(statement)

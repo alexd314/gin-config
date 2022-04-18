@@ -2500,6 +2500,64 @@ class ConfigTest(absltest.TestCase):
       scoped = config.get_configurable('test_scope/pass_through')
     self.assertEqual(scoped(), 5)
 
+  def testAppendAssignment(self):
+        config_str1 = """
+        import gin.testdata.import_test_configurables
+
+        scope1/identity.param = 'param1'
+        scope2/identity.param = 'param2'
+        ConfigurableClass.kwarg1 += [@scope1/identity()]
+        ConfigurableClass.kwarg1 += [@scope2/identity()]
+        """
+        config.parse_config(config_str1)
+        self.assertListEqual(ConfigurableClass().kwarg1,['param1','param2'])
+
+        config_str2 = """
+        import gin.testdata.import_test_configurables
+
+        scope1/identity.param = 'param1'
+        scope2/identity.param = 'param2'
+        ConfigurableClass:
+          kwarg1 += [@scope1/identity()]
+          kwarg1 += [@scope2/identity()]
+        """
+        config.clear_config(clear_constants=True)
+        config.parse_config(config_str2)
+        self.assertListEqual(ConfigurableClass().kwarg1,['param1','param2'])
+
+
+        config_str3 = """
+        import gin.testdata.import_test_configurables
+
+        scope1/identity.param = 'param1'
+        scope2/identity.param = 'param2'
+        ConfigurableClass.kwarg1 += {'param1': @scope1/identity(), 'param3' : 123 }
+        ConfigurableClass.kwarg1 += {'param2': @scope2/identity(), 'param4' : 456 }
+        """
+        config.clear_config(clear_constants=True)
+        config.parse_config(config_str3)
+        self.assertDictEqual(ConfigurableClass().kwarg1,{
+          'param1':'param1',
+          'param2':'param2',
+          'param3': 123,
+          'param4': 456
+        })
+
+        config_str4 = """
+        import gin.testdata.import_test_configurables
+        scope1/identity.param = 'param1'
+        scope2/identity.param = 'param2'
+
+        MACRO_NAME = [@scope1/identity()]
+        MACRO_NAME += [@scope2/identity()]
+        ConfigurableClass.kwarg1 = %MACRO_NAME
+        """
+        config.clear_config(clear_constants=True)
+        config.parse_config(config_str4)
+        self.assertListEqual(ConfigurableClass().kwarg1, [
+          'param1',
+          'param2'
+        ])
 
 if __name__ == '__main__':
   absltest.main()

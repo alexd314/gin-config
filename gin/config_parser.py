@@ -81,6 +81,7 @@ class BindingStatement(typing.NamedTuple):
   arg_name: str
   value: Any
   location: Location
+  append: bool
 
 
 class ImportStatement(typing.NamedTuple):
@@ -235,11 +236,12 @@ class ConfigParser(object):
     stmt_loc = self._current_location(ignore_char_num=True)
     binding_key_or_keyword = self._parse_selector()
     statement = None
-    if self._current_token.string == '=':
+    if self._current_token.string in ('=','+='):
+      append = self._current_token.string == '+='
       self._advance_one_token()
       value = self.parse_value()
       scope, selector, arg_name = parse_binding_key(binding_key_or_keyword)
-      statement = BindingStatement(scope, selector, arg_name, value, stmt_loc)
+      statement = BindingStatement(scope, selector, arg_name, value, stmt_loc, append)
     elif self._current_token.string == ':':
       statement, bindings = self._parse_binding_block(
           binding_key_or_keyword, block_location=stmt_loc)
@@ -342,6 +344,18 @@ class ConfigParser(object):
       received = f'  Got {actual_type_name} = {actual_value}.'
       self._raise_syntax_error(err_msg + received)
     self._advance_one_token()
+
+  def _expect_str_in(self, expected, err_msg):
+    """Check that the current token is `in expected`, otherwise raise `err_msg`."""
+    """When valid, returns the actual value"""
+    actual = self._current_token.string
+    if not actual in expected:
+      actual_type_name = tokenize.tok_name[self._current_token.type]
+      actual_value = self._current_token.string
+      received = f'  Got {actual_type_name} = {actual_value}.'
+      self._raise_syntax_error(err_msg + received)
+    self._advance_one_token()
+    return actual
 
   def _skip(self, skippable_token_types):
     while self._current_token.type in skippable_token_types:
@@ -461,14 +475,15 @@ class ConfigParser(object):
       while self._current_token.type != tokenize.DEDENT:
         binding_location = self._current_location()
         arg_name = self._parse_identifier()
-        self._expect('=', "Expected '='.")
+        append = self._expect_str_in(('=','+='),"Expected '=' or '+=' .") == '+='
         value = self.parse_value()
         binding = BindingStatement(
             scope=scope,
             selector=selector,
             arg_name=arg_name,
             value=value,
-            location=binding_location)
+            location=binding_location,
+            append = append)
         bindings.append(binding)
         self._expect(tokenize.NEWLINE, 'Expected newline.')
         self._skip_whitespace_and_comments()
