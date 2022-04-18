@@ -397,6 +397,14 @@ include a dotted module name prefix (`some.module.function_name`).
       supplied as <code>value</code>.</td>
     </tr>
     <tr>
+      <td><code>name.param&nbsp;+=&nbsp; [value1, value2, ...]</code></td>
+      <td>Append list syntax of a Gin binding. This will append <code>value1</code>, <code>value2</code>, ..., to the previous list binding for <code>name.param</code>. Values are appended in the order they appear in the configuration.</td>
+    </tr>
+    <tr>
+      <td><code>name.param&nbsp;+=&nbsp; {key1:value1, key2:value2, ...}</code></td>
+      <td>Append dictionary syntax of a Gin binding. This will append <code>key1:value1</code>, <code>key2:value2</code>, ..., to the previous dictionary binding for <code>name.param</code>. Values are appended in the order they appear in the configuration.</td>
+    </tr>
+    <tr>
       <td><code>@some_name</code></td>
       <td>A <em>reference</em> to another function or class named
       <code>some_name</code>. This may be given as the value of a binding, to
@@ -423,6 +431,14 @@ include a dotted module name prefix (`some.module.function_name`).
       <td><code>MACRO_NAME&nbsp;=&nbsp;value</code></td>
       <td>A macro. This provides a shorthand name for the expression on the
       right hand side.</td>
+    </tr>
+    <tr>
+      <td><code>MACRO_NAME&nbsp;+=&nbsp;[value1, value2, ...]</code></td>
+      <td>Append list to MACRO. The macro's list is extended to include the new values</td>
+    </tr>
+    <tr>
+      <td><code>MACRO_NAME&nbsp;+=&nbsp;{key1:value1, key2:value2, ...}</code></td>
+      <td>Append dictionary to MACRO. The macro's dictionary is extended to include the new values</td>
     </tr>
     <tr>
       <td><code>%MACRO_NAME</code></td>
