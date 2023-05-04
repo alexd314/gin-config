@@ -93,6 +93,7 @@ import pprint
 import threading
 import traceback
 import typing
+from operator import itemgetter
 from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, Union
 
 from gin import config_parser
@@ -2888,3 +2889,11 @@ def markdown(string):
       output_lines.append(procd_line)
 
   return '\n'.join(output_lines)
+
+def query_all_macro_parameters_with_name_prefix(macro_name_prefix: str) -> Dict[str,Any]:
+  candidate_macro_names = list(map(itemgetter(0), filter(lambda x: x[0].startswith(macro_name_prefix) and x[1] == 'gin.macro', _CONFIG.keys())))
+  result = { 
+      macro_name : query_parameter(macro_name+"/gin.macro.value")
+                   for macro_name in candidate_macro_names
+  }
+  return result
