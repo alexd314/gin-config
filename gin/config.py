@@ -94,7 +94,7 @@ import threading
 import traceback
 import typing
 from operator import itemgetter
-from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, Union, List
 
 from gin import config_parser
 from gin import selector_map
@@ -2897,3 +2897,12 @@ def query_all_macro_parameters_with_name_prefix(macro_name_prefix: str) -> Dict[
                    for macro_name in candidate_macro_names
   }
   return result
+  
+def query_unset_macros() -> List[str]:
+  unset = set()
+  config = _CONFIG  
+  for ref in iterate_references(config, to=get_configurable(macro)):
+    if ref.config_key not in _CONFIG:
+      unset.add(ref.config_key[0])
+    
+  return list(sorted(unset))

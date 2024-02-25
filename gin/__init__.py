@@ -40,6 +40,6 @@ from gin.config import query_parameter
 from gin.config import register
 from gin.config import REQUIRED
 from gin.config import unlock_config
-from gin.config import query_all_macro_parameters_with_name_prefix
+from gin.config import query_all_macro_parameters_with_name_prefix, query_unset_macros
 
 import gin.resource_reader
